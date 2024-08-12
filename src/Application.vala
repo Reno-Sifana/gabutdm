@@ -1,5 +1,5 @@
 /*
-* Copyright (c) {2021} torikulhabib (https://github.com/gabutakut)
+* Copyright (c) {2024} torikulhabib (https://github.com/gabutakut)
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public
@@ -30,14 +30,9 @@ namespace Gabut {
         private bool dontopen = false;
         private string lastclipboard;
 
-        public GabutApp () {
-            Object (
-                application_id: "com.github.gabutakut.gabutdm",
-                flags: GLib.ApplicationFlags.HANDLES_COMMAND_LINE
-            );
-        }
-
         construct {
+            application_id = "com.github.gabutakut.gabutdm";
+            flags = GLib.ApplicationFlags.HANDLES_COMMAND_LINE;
             GLib.OptionEntry [] options = new GLib.OptionEntry [3];
             options [0] = { "startingup", 's', GLib.OptionFlags.NONE, GLib.OptionArg.NONE, null, "Starup", "Run App on Startup" };
             options [1] = { GLib.OPTION_REMAINING, 0, GLib.OptionFlags.NONE, GLib.OptionArg.STRING_ARRAY, null, "Array file", "Open File or URIs" };
@@ -72,8 +67,8 @@ namespace Gabut {
         protected override void activate () {
             if (gabutwindow == null) {
                 if (open_database (out gabutdb) != Sqlite.OK) {
-                    notify_app (_("Database Error"),
-                                _("Can't open database: %s\n").printf (gabutdb.errmsg ()), new ThemedIcon ("office-database"));
+                    notify_app (_("Database Error"), 
+                    _("Can't open database: %s\n").printf (gabutdb.errmsg ()), new ThemedIcon ("office-database"));
                     play_sound ("dialog-error");
                 }
                 settings_table ();
@@ -105,8 +100,8 @@ namespace Gabut {
                 var gabutserver = new GabutServer ();
                 gabutserver.set_listent.begin (int.parse (get_dbsetting (DBSettings.PORTLOCAL)));
                 gabutserver.send_post_data.connect (dialog_server);
-                gabutwindow = new GabutWindow (this);
-
+                gabutwindow = new GabutWindow ();
+                add_window (gabutwindow);
                 var droptarget = new Gtk.DropTarget (Type.STRING, Gdk.DragAction.COPY);
                 gabutwindow.child.add_controller (droptarget);
                 droptarget.accept.connect (on_drag_data_received);
@@ -134,9 +129,7 @@ namespace Gabut {
                         }
                     });
                 });
-                gabutserver.address_url.connect ((url, options, later, linkmode)=> {
-                    gabutwindow.add_url_box (url, options, later, linkmode);
-                });
+                gabutserver.address_url.connect (gabutwindow.add_url_box);
                 downloaders = new GLib.List<Downloader> ();
                 succesdls = new GLib.List<SuccesDialog> ();
                 addurls = new GLib.List<AddUrl> ();
@@ -170,20 +163,14 @@ namespace Gabut {
                 gabutserver.delete_row.connect ((status)=> {
                     gabutwindow.remove_item (status);
                 });
-                var gtkset = Gtk.Settings.get_default ().gtk_theme_name;
-                if (gtkset.down ().contains ("-dark")){
-                    set_dbsetting (Gabut.DBSettings.THEMESYSTEM,  gtkset.replace ("-dark", ""));
-                } else {
-                    set_dbsetting (Gabut.DBSettings.THEMESYSTEM, gtkset);
-                }
-                pantheon_theme.begin ();
+                gdm_theme.begin ();
                 gabutwindow.load_dowanload ();
                 download_table ();
-                play_sound ("bell");
                 if (!startingup && !dontopen) {
-                    gabutwindow.show ();
+                    open_now ();
                 }
-                clipboard = Gdk.Display.get_default ().get_clipboard ();
+                lastclipboard = get_dbsetting (Gabut.DBSettings.LASTCLIPBOARD);
+                clipboard = gabutwindow.get_clipboard ();
                 Timeout.add_seconds (1, on_clipboard);
             } else {
                 open_now ();
@@ -196,6 +183,7 @@ namespace Gabut {
                 startingup = false;
             } else {
                 gabutwindow.present ();
+                gabutwindow.show ();
             }
         }
 
@@ -221,7 +209,7 @@ namespace Gabut {
         }
 
         public void dialog_succes (string strdata) {
-            var succesdl = new SuccesDialog (this) {
+            var succesdl = new SuccesDialog () {
                 transient_for = gabutwindow,
                 datastr = strdata
             };
@@ -250,14 +238,12 @@ namespace Gabut {
             if (url_active (match_info.fetch (PostServer.URL))) {
                 return;
             }
-            var addurl = new AddUrl (this) {
-                transient_for = gabutwindow
+            var addurl = new AddUrl () {
+                transient_for = gabutwindow,
+                portserver = match_info
             };
-            addurl.server_link (match_info);
             addurls.append (addurl);
-            addurl.downloadfile.connect ((url, options, later, linkmode)=> {
-                gabutwindow.add_url_box (url, options, later, linkmode);
-            });
+            addurl.downloadfile.connect (gabutwindow.add_url_box);
             addurl.close.connect (()=> {
                 addurls.foreach ((addur)=> {
                     if (addur == addurl) {
@@ -281,6 +267,7 @@ namespace Gabut {
         public bool dialog_url (string link) {
             bool metabtn = false;
             string icon = "";
+            string filesize = "";
             if (link.has_prefix ("http://") || link.has_prefix ("https://") || link.has_prefix ("ftp://") || link.has_prefix ("sftp://")) {
                 icon = "com.github.gabutakut.gabutdm.insertlink";
             } else if (link.has_prefix ("magnet:?")) {
@@ -290,23 +277,25 @@ namespace Gabut {
             } else if (link.has_suffix (".torrent")) {
                 icon = "com.github.gabutakut.gabutdm.torrent";
                 metabtn = true;
+                filesize = GLib.format_size (get_finfo(File.new_for_uri (link)).get_size ());
             } else if (link.has_suffix (".metalink")) {
                 icon = "com.github.gabutakut.gabutdm";
                 metabtn = true;
+                filesize = GLib.format_size (get_finfo(File.new_for_uri (link)).get_size ());
             } else if (link == "") {
                 icon = "list-add";
             } else {
                 return true;
             }
-            var addurl = new AddUrl (this) {
-                transient_for = gabutwindow
+            var addurl = new AddUrl () {
+                transient_for = gabutwindow,
+                url_link = link.strip (),
+                url_icon = icon,
+                meta_sensitive = metabtn,
+                filesize = filesize
             };
-            addurl.add_link (link, icon);
-            addurl.save_meta.sensitive = metabtn;
             addurls.append (addurl);
-            addurl.downloadfile.connect ((url, options, later, linkmode)=> {
-                gabutwindow.add_url_box (url, options, later, linkmode);
-            });
+            addurl.downloadfile.connect (gabutwindow.add_url_box);
             addurl.close.connect (()=> {
                 addurls.foreach ((addur)=> {
                     if (addur == addurl) {
@@ -331,7 +320,7 @@ namespace Gabut {
         private bool url_active (string url) {
             bool active = false;
             addurls.foreach ((urls)=> {
-                if (urls.get_link () == url) {
+                if (urls.url_link == url) {
                     active = true;
                 }
             });
@@ -350,7 +339,7 @@ namespace Gabut {
         }
 
         private void download (string aria_gid) {
-            var downloader = new Downloader (this)  {
+            var downloader = new Downloader ()  {
                 transient_for = gabutwindow,
                 ariagid = aria_gid
             };
@@ -395,7 +384,7 @@ namespace Gabut {
                         if (textclip != null && textclip != "" && textclip != lastclipboard) {
                             if (!url_active (textclip.strip ())) {
                                 if (!dialog_url (textclip.strip ())) {
-                                    lastclipboard = textclip;
+                                    lastclipboard = set_dbsetting (Gabut.DBSettings.LASTCLIPBOARD, textclip);
                                 }
                             }
                         }
@@ -434,7 +423,7 @@ namespace Gabut {
             return Gdk.EVENT_PROPAGATE;
         }
 
-        private async void drag_value (Gdk.Drop drop, out Value? valu) throws Error {
+        private async void drag_value (Gdk.Drop drop, out GLib.Value? valu) throws Error {
             valu = yield drop.read_value_async (GLib.Type.STRING, GLib.Priority.DEFAULT, null);
         }
 

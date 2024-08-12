@@ -1,5 +1,5 @@
 /*
-* Copyright (c) {2021} torikulhabib (https://github.com/gabutakut)
+* Copyright (c) {2024} torikulhabib (https://github.com/gabutakut)
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public
@@ -30,6 +30,7 @@ namespace Gabut {
                 halign = Gtk.Align.CENTER,
                 wrap_mode = Pango.WrapMode.WORD_CHAR,
                 attributes = set_attribute (Pango.Weight.BOLD),
+                tooltip_text = selector.to_tooltip (),
                 margin_top = 6,
                 margin_bottom = 6,
                 margin_start = 12,

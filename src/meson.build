@@ -33,7 +33,15 @@ sources = files (
     'ServerNotFound.vala',
     'ServerComplete.vala',
     'SortBy.vala',
-    'DeAscending.vala',
     'GdmOutstream.vala',
-    'DbusIndicator.vala'
+    'DbusIndicator.vala',
+    'PeersRow.vala',
+    'ServerRow.vala',
+    'TorrentRow.vala',
+    'GdmPaint.vala',
+    'GdmMenu.vala',
+    'ProgressPaint.vala',
+    'QrcodePaint.vala',
+    'OpenMenu.vala',
+    'ProxyRecently.vala'
 )

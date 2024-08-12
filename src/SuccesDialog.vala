@@ -1,5 +1,5 @@
 /*
-* Copyright (c) {2021} torikulhabib (https://github.com/gabutakut)
+* Copyright (c) {2024} torikulhabib (https://github.com/gabutakut)
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public
@@ -27,14 +27,9 @@ namespace Gabut {
         private MediaEntry directory;
         public string datastr;
 
-        public SuccesDialog (Gtk.Application application) {
-            Object (application: application,
-                    resizable: false,
-                    use_header_bar: 1
-            );
-        }
-
         construct {
+            resizable = false;
+            use_header_bar = 1;
             icon_image = new Gtk.Image () {
                 valign = Gtk.Align.START,
                 halign = Gtk.Align.END,
@@ -159,17 +154,12 @@ namespace Gabut {
             };
             centerbox.set_start_widget (box_action);
             centerbox.set_end_widget (close_button);
-
-            var maingrid = new Gtk.Grid () {
-                orientation = Gtk.Orientation.VERTICAL,
-                halign = Gtk.Align.CENTER,
-                margin_start = 10,
-                margin_end = 10,
-                hexpand = true
-            };
-            maingrid.attach (dialogmain, 0, 0);
-            maingrid.attach (centerbox, 0, 1);
-            child = maingrid;
+            var area = get_content_area ();
+            area.margin_start = 10;
+            area.margin_end = 10;
+            area.halign = Gtk.Align.CENTER;
+            area.append (dialogmain);
+            area.append (centerbox);
         }
 
         public override void show () {

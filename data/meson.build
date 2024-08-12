@@ -1,16 +1,8 @@
 # Install icons
-icon_sizes = ['16', '24', '32', '48', '64', '128']
-
-foreach i : icon_sizes
-    install_data (
-        join_paths ('icons', i, meson.project_name () + '.svg'),
-        install_dir: join_paths (get_option ('datadir'), 'icons', 'hicolor', i + 'x' + i, 'apps')
-    )
-    install_data (
-        join_paths ('icons', i, meson.project_name () + '.svg'),
-        install_dir: join_paths (get_option ('datadir'), 'icons', 'hicolor', i + 'x' + i + '@2', 'apps')
-    )
-endforeach
+install_data (
+    join_paths ('icons', 'apps', meson.project_name () + '.svg'),
+    install_dir: join_paths (get_option ('datadir'), 'icons', 'hicolor', 'scalable', 'apps')
+)
 
 actions = [
     '.active.svg',
@@ -22,6 +14,8 @@ actions = [
     '.clear.svg',
     '.seed.svg',
     '.seedloop.svg',
+    '.seedloopx.svg',
+    '.seedloopy.svg',
     '.metalink.svg',
     '.find.svg',
     '.insertlink.svg',
@@ -31,27 +25,29 @@ actions = [
     '.referer.svg',
     '.hash.svg',
     '.theme.svg',
-    '.torrent.svg'
+    '.torrent.svg',
+    '.up.svg',
+    '.down.svg',
+    '.client.svg',
+    '.uri.svg',
+    '.hdd.svg',
+    '.date.svg',
+    '.svdrv.svg',
+    '.cookie.svg',
+    '.opt.svg',
+    '.menu.svg',
+    '.onactive.svg',
+    '.amchok.svg',
+    '.amchoking.svg',
+    '.peerchok.svg',
+    '.peerchoking.svg'
 ]
 
 foreach m : actions
     install_data(
         join_paths('icons', 'actions', meson.project_name() + m),
-        install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', '16x16' , 'apps')
+        install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'scalable' , 'actions')
     )
-    install_data(
-        join_paths('icons', 'actions', meson.project_name() + m),
-        install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', '24x24' , 'apps')
-    )
-    install_data(
-        join_paths('icons', 'actions', meson.project_name() + m),
-        install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', '32x32' , 'apps')
-    )
-    install_data(
-        join_paths('icons', 'actions', meson.project_name() + m),
-        install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', '48x48' , 'apps')
-    )
-
 endforeach
 
 # Translate and install our .desktop file so the Applications Menu will see it

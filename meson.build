@@ -1,4 +1,4 @@
-project ('com.github.gabutakut.gabutdm','vala', 'c', version: '2.0.0')
+project ('com.github.gabutakut.gabutdm','vala', 'c', version: '2.6.0')
 
 i18n = import ('i18n')
 
@@ -18,6 +18,7 @@ dependencies = [
     dependency ('gdk-pixbuf-2.0'),
     dependency ('cairo'),
     dependency ('libcurl'),
+    dependency ('libadwaita-1'),
 
     meson.get_compiler ('vala').find_library ('posix'),
 ]

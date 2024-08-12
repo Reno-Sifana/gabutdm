@@ -9,7 +9,7 @@
 
 namespace Gabut {
     public class ModeButton : Gtk.Box {
-        private class Item : Gtk.ToggleButton {
+        private class Item : Gtk.CheckButton {
             public int index { get; construct; }
             public Item (int index) {
                 Object (index: index);
@@ -35,25 +35,30 @@ namespace Gabut {
         private Gee.HashMap<int, Item> item_map;
 
         construct {
-            homogeneous = true;
             spacing = 0;
             item_map = new Gee.HashMap<int, Item> ();
         }
 
-        public int append_pixbuf (Gdk.Pixbuf pixbuf) {
-            return appends (new Gtk.Image.from_pixbuf (pixbuf));
-        }
-
         public int append_text (string text) {
-            return appends (new Gtk.Label (text));
+            var label = new Gtk.Label (text) {
+                valign = Gtk.Align.CENTER,
+                attributes = set_attribute (Pango.Weight.ULTRABOLD)
+            };
+            return appends (label);
         }
 
-        public int append_icon (string icon_name, Gtk.IconSize size) {
-            var img = new Gtk.Image.from_icon_name (icon_name) {
-                icon_size = size,
-                pixel_size = size
+        public int append_icon_text (string icon_name, string name_label) {
+            var label = new Gtk.Label (name_label) {
+                valign = Gtk.Align.CENTER,
+                attributes = set_attribute (Pango.Weight.ULTRABOLD)
             };
-            return appends (img);
+            var gridn = new Gtk.Grid () {
+                column_spacing = 4,
+                valign = Gtk.Align.CENTER
+            };
+            gridn.attach (new Gtk.Image.from_icon_name (icon_name), 0, 0);
+            gridn.attach (label, 1, 0);
+            return appends (gridn);
         }
 
         public int appends (Gtk.Widget w) {
@@ -75,25 +80,18 @@ namespace Gabut {
             return index;
         }
 
-        private void clear_selected () {
-            _selected = -1;
-            foreach (var item in item_map.values) {
-                if (item != null && item.active) {
-                    item.set_active (false);
-                }
-            }
-        }
-
         public void set_active (int new_active_index) {
             if (new_active_index <= -1) {
-                clear_selected ();
+                _selected = -1;
                 return;
             }
             var new_item = item_map[new_active_index] as Item;
             if (new_item != null) {
                 new_item.set_active (true);
                 if (new_item.child.name == "GtkLabel") {
-                    ((Gtk.Label) new_item.child).attributes = color_attribute (60000, 0, 0);
+                    ((Gtk.Label) new_item.child).attributes = color_attribute (0, 60000, 0);
+                } else {
+                    ((Gtk.Label) new_item.child.get_last_child ()).attributes = color_attribute (0, 60000, 0);
                 }
                 if (_selected == new_active_index) {
                     return;
@@ -102,7 +100,9 @@ namespace Gabut {
                 _selected = new_active_index;
                 if (old_item != null) {
                     if (old_item.child.name == "GtkLabel") {
-                        ((Gtk.Label) old_item.child).attributes = null;
+                        ((Gtk.Label) old_item.child).attributes = set_attribute (Pango.Weight.ULTRABOLD);
+                    } else {
+                        ((Gtk.Label) old_item.child.get_last_child ()).attributes = set_attribute (Pango.Weight.ULTRABOLD);
                     }
                     old_item.set_active (false);
                 }
